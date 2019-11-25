@@ -1,0 +1,79 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.BookMapper">
+    <resultMap id="BookMap" type="book"><!--type里的user不分大小写-->
+    <id column="book_id" property="book_id"></id>
+    <result column="name" property="name"></result>
+    <result column="author" property="author"></result>
+    <result column="booknumber" property="booknumber"></result>
+    <result column="price" property="price"></result>
+    <result column="press" property="press"></result>
+        <result column="borrower" property="borrower"></result>
+        <result column="headpathbook" property="headpathbook"></result>
+        <association property="borrow" javaType="Borrow">
+            <id property="id" column="boid"></id>
+        </association>
+    </resultMap>
+    <sql id="sql">
+           SELECT b.book_id,b.name,b.author,b.press,b.borrower,b.headpathbook,u.name
+        FROM table_book AS b LEFT JOIN borrow_table AS bo ON bo.book_id=b.book_id
+        LEFT JOIN user AS  u ON bo.user_id = u.user_id
+    </sql>
+<!--添加图书-->
+    <insert id="RegisterBook" parameterType="book">
+        insert into table_book(book_id,name,author,booknumber,price,press,borrower) values(#{book_id},#{name},#{author},#{booknumber},#{price},#{press},#{borrower})
+    </insert>
+<!--修改图书-->
+    <update id="updateBook" parameterType="book">
+        update table_book set name=#{name},author=#{author},booknumber=#{booknumber},price=#{price},press=#{press},borrower=#{borrower},headpathbook=#{headpathbook} where book_id=#{book_id}
+    </update>
+<!--删除图书-->
+    <delete id="deleteBookByid" parameterType="java.lang.Integer">
+        delete from table_book where book_id=#{book_id}
+    </delete>
+<!--修改页面-->
+    <select id="getBookByid" parameterType="java.lang.Integer" resultType="book">
+        select * from table_book where book_id=#{book_id}
+    </select>
+
+    <select id="getBookList" parameterType="book" resultType="book">
+        <include refid="sql"/>
+        <where>
+            <if test="name!=null and name!=''" >
+                and b.name like '%${name}%'
+            </if>
+            <if test="author!=null and author!=''" >
+                and b.author like '%${author}%'
+            </if>
+            <if test="borrower!=null and borrower!=''" >
+                and b.borrower=#{borrower}
+            </if>
+        </where>
+    </select>
+<!--借阅-->
+    <insert id="borrow" parameterType="Borrow">
+        insert into borrow_table values(null,#{book_id},#{user_id})
+    </insert>
+<select id="borrowBookList" resultMap="BookMap">
+    select b.book_id,b.name,b.author,b.press,bo.id as boid from table_book as b left join borrow_table as bo on b.book_id=bo.book_id;
+</select>
+    <update id="borrowBookupdate" parameterType="java.lang.Integer" >
+    update table_book  set borrower=#{1} where book_id=#{book_id}
+</update>
+    <select id="selectBookByWhere" parameterType="book" >
+        select * from table_book
+        <where>
+            <if test="name != null and name != ''">
+                and name like '%${name}%'
+            </if>
+            <if test="author != null and author !=''">
+                and author = '${author}'
+            </if>
+            <if test="lend !=null and lend !=''">
+                and borrower =#{borrower}
+            </if>
+        </where>
+    </select>
+
+</mapper>
